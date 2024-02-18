@@ -1,0 +1,18 @@
+*{
+  font-family: "Protest Riot", sans-serif;
+}
+
+.hero{
+  background-image: url(https://wallpapers.com/images/hd/4k-eagle-in-mountains-3hx4ybfus71fibgd.jpg); 
+  height: 100vh; 
+  width: 100vw; 
+  background-position: center; 
+  background-size: cover; 
+  background-repeat: no-repeat;
+}
+
+.carouselHolder{
+  justify-content: center;
+  display: flex;
+  padding: 10%
+}
