@@ -7,6 +7,17 @@ const upcomingList = document.getElementById('upcomingList');
 const completedList = document.getElementById('completedList');
 const tabButtons = document.querySelectorAll('.tab-btn');
 
+// Verify required elements exist
+if (!modal || !closeBtn || !modalLogo || !modalHighlight || !upcomingList || !completedList) {
+  console.error('Required modal elements not found');
+  return;
+}
+
+if (platformCards.length === 0 || tabButtons.length === 0) {
+  console.error('Required interactive elements not found');
+  return;
+}
+
 const platformData = {
   codeforces: {
     logo:'./assets/images/logos/platform/codeforces.svg',
