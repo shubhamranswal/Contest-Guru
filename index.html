@@ -4,6 +4,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="Track coding contests from Codeforces, LeetCode, CodeChef, HackerRank, and HackerEarth in one place. Never miss a coding contest again.">
+  <meta property="og:title" content="Contest Guru | Track Coding Contests Effortlessly">
+  <meta property="og:description"
+    content="One-stop platform for competitive programmers to track contests across all major platforms.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://shubhamranswal.github.io/Contest-Guru/">
+  <link rel="icon" href="./assets/images/favicon.ico" type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <title>Contest Guru | Track Coding Contests Effortlessly</title>
   <link rel="stylesheet" href="./assets/css/style.css">
 </head>
@@ -24,22 +34,22 @@
     <h2 class="section-title">Why Contest Guru?</h2>
     <div class="features-grid">
       <div class="feature-card">
-        <div class="icon">📅</div>
+        <div class="icon" role="img" aria-label="Calendar icon">📅</div>
         <h3>All Contests</h3>
         <p>Aggregate contests from multiple platforms in real-time.</p>
       </div>
       <div class="feature-card">
-        <div class="icon">⚡</div>
+        <div class="icon" role="img" aria-label="Lightning icon">⚡</div>
         <h3>Fast Interface</h3>
         <p>Minimal, interactive, and blazing fast user experience.</p>
       </div>
       <div class="feature-card">
-        <div class="icon">💻</div>
+        <div class="icon" role="img" aria-label="Computer icon">💻</div>
         <h3>Multi-Platform</h3>
         <p>Supports Codeforces, LeetCode, CodeChef, HackerRank & HackerEarth.</p>
       </div>
       <div class="feature-card">
-        <div class="icon">🚀</div>
+        <div class="icon" role="img" aria-label="Rocket icon">🚀</div>
         <h3>Open Source</h3>
         <p>Contribute or customize it on GitHub freely.</p>
       </div>
@@ -53,53 +63,51 @@
 
       <div class="platform-card" data-platform="codeforces">
         <div class="platform-logo"><img src="./assets/images/logos/platform/codeforces.svg" alt="Codeforces"></div>
-        <h3>⬇️</h3>
+        <h3 aria-hidden="true">⬇️</h3>
       </div>
-
       <div class="platform-card" data-platform="leetcode">
         <div class="platform-logo"><img src="./assets/images/logos/platform/leetcode.svg" alt="LeetCode"></div>
-        <h3>⬇️</h3>
+        <h3 aria-hidden="true">⬇️</h3>
       </div>
-
       <div class="platform-card" data-platform="codechef">
         <div class="platform-logo"><img src="./assets/images/logos/platform/codechef.svg" alt="CodeChef"></div>
-        <h3>⬇️</h3>
+        <h3 aria-hidden="true">⬇️</h3>
       </div>
-
       <div class="platform-card" data-platform="hackerrank">
         <div class="platform-logo"><img src="./assets/images/logos/platform/hackerrank.svg" alt="HackerRank"></div>
-        <h3>⬇️</h3>
+        <h3 aria-hidden="true">⬇️</h3>
       </div>
-
       <div class="platform-card" data-platform="hackerearth">
         <div class="platform-logo"><img src="./assets/images/logos/platform/hackerearth.svg" alt="HackerEarth"></div>
-        <h3>⬇️</h3>
+        <h3 aria-hidden="true">⬇️</h3>
       </div>
 
     </div>
   </section>
 
   <!-- PLATFORM DETAIL MODAL -->
-  <div class="platform-modal" id="platformModal">
+  <div class="platform-modal" id="platformModal" role="dialog" aria-modal="true" aria-labelledby="modalLogo">
     <div class="modal-content">
-      <button class="close-btn">&times;</button>
+      <button class="close-btn" aria-label="Close modal">&times;</button>
       <div class="platform-header">
         <img id="modalLogo" src="" alt="" class="modal-logo">
         <p id="modalHighlight"></p>
       </div>
       <div class="tabs">
-        <button class="tab-btn active" data-tab="upcoming">Upcoming</button>
-        <button class="tab-btn" data-tab="completed">Completed</button>
+        <button class="tab-btn active" data-tab="upcoming" role="tab" aria-selected="true"
+          aria-controls="upcomingList">Upcoming</button>
+        <button class="tab-btn" data-tab="completed" role="tab" aria-selected="false"
+          aria-controls="completedList">Completed</button>
       </div>
-      <div class="tab-content">
-        <ul id="upcomingList" class="contest-list active"></ul>
-        <ul id="completedList" class="contest-list"></ul>
+      <div class="tab-content" role="tabpanel">
+        <ul id="upcomingList" class="contest-list active" role="list"></ul>
+        <ul id="completedList" class="contest-list" role="list"></ul>
       </div>
     </div>
   </div>
 
   <!-- CTA -->
-  <section style="padding: 0; margin: 0; max-width: 100vw;">
+  <section class="cta-wrapper">
     <div class="cta">
       <h2>Never Miss a Contest</h2>
       <p>Track, filter, and participate in coding contests with ease. Open-source & community-driven.</p>
@@ -112,7 +120,6 @@
     © 2025 Contest Guru • Built with ❤️ by Shubham Ranswal
   </footer>
 
-  <script src="./assets/js/script.js"></script>
-</body>
+<script type="module" src="./assets/js/script.js"></script></body>
 
 </html>

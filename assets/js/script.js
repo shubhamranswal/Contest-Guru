@@ -7,6 +7,8 @@ const upcomingList = document.getElementById('upcomingList');
 const completedList = document.getElementById('completedList');
 const tabButtons = document.querySelectorAll('.tab-btn');
 
+// TODO: Replace with real API data from Codeforces, LeetCode, etc.
+// This is placeholder data for UI demonstration
 const platformData = {
   codeforces: {
     logo:'./assets/images/logos/platform/codeforces.svg',
@@ -61,6 +63,11 @@ platformCards.forEach(card => {
     const key = card.dataset.platform;
     const data = platformData[key];
 
+    if (!data) {
+      console.warn(`Platform data not found for key: ${key}`);
+      return;
+    }
+
     modalLogo.src = data.logo;
     modalHighlight.textContent = data.highlight;
 
@@ -68,6 +75,8 @@ platformCards.forEach(card => {
     completedList.innerHTML = data.completed.map(c => `<li>${c}</li>`).join('');
 
     modal.classList.add('active');
+    document.body.style.overflow = 'hidden'; // Prevent background scroll
+    closeBtn.focus(); // Focus the close button
 
     // Show upcoming tab by default
     tabButtons.forEach(btn => btn.classList.remove('active'));
@@ -78,7 +87,24 @@ platformCards.forEach(card => {
 });
 
 // Close modal
-closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+const closeModal = () => {
+  modal.classList.remove('active');
+  document.body.style.overflow = ''; // Re-enable scrolling
+};
+
+closeBtn.addEventListener('click', closeModal);
+
+// Close on backdrop click
+modal.addEventListener('click', (e) => {
+  if (e.target === modal) closeModal();
+});
+
+// Close on ESC key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && modal.classList.contains('active')) {
+    closeModal();
+  }
+});
 
 // Tab switching
 tabButtons.forEach(btn => {
