@@ -22,7 +22,7 @@ We don’t host contests — instead, we aggregate contest information, profiles
 ## 🛠️ Tech Stack
 
 - **Frontend:** HTML, CSS, JavaScript  
-- **Backend:** Firebase (Firestore, Authentication, Hosting)  
+- **Backend:** Firebase (Firestore, Authentication, Hosting) [Planned]  
 - **Hosting (current):** GitHub Pages (for static prototype)  
 
 ---
