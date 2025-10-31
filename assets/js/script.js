@@ -1,3 +1,13 @@
+// --------------------------
+// Contest Guru - Main Script
+// --------------------------
+
+// Imports
+import { CLIST_USERNAME, CLIST_API_KEY } from './config.js';
+
+// --------------------------
+// DOM Elements
+// --------------------------
 const platformCards = document.querySelectorAll('.platform-card');
 const modal = document.getElementById('platformModal');
 const closeBtn = document.querySelector('.close-btn');
@@ -7,78 +17,70 @@ const upcomingList = document.getElementById('upcomingList');
 const completedList = document.getElementById('completedList');
 const tabButtons = document.querySelectorAll('.tab-btn');
 
-// TODO: Replace with real API data from Codeforces, LeetCode, etc.
-// This is placeholder data for UI demonstration
-const platformData = {
-  codeforces: {
-    logo:'./assets/images/logos/platform/codeforces.svg',
-    title:'Codeforces',
-    highlight:'Next Contest: Round #XXX — Today 18:00 — 2h',
-    upcoming:[
-      'Educational Round #YYY — Tomorrow 15:00 — 2h',
-      'Round #ZZZ — 3rd Nov 18:00 — 2h'
-    ],
-    completed:[
-      'Round #AAA — 1st Nov 18:00 — 2h',
-      'Round #BBB — 30th Oct 18:00 — 2h'
-    ]
-  },
+// Cache validity: 30 minutes
+const CACHE_TTL_MS = 30 * 60 * 1000;
+// Cached contest data
+const platformData = {};
+
+// --------------------------
+// Platform configurations
+// --------------------------
+const platformConfig = {
   leetcode: {
-    logo:'./assets/images/logos/platform/leetcode.svg',
-    title:'LeetCode',
-    highlight:'Next Contest: Weekly Contest 123 — Today 20:00 — 90min',
-    upcoming:[
-      'Weekly Contest 124 — Tomorrow 20:00 — 90min'
-    ],
-    completed:[
-      'Weekly Contest 122 — Yesterday 20:00 — 90min'
-    ]
+    name: 'LeetCode',
+    logo: './assets/images/logos/platform/leetcode.svg',
+    fetcher: () => fetchClistContests('leetcode.com')
   },
   codechef: {
-    logo:'./assets/images/logos/platform/codechef.svg',
-    title:'CodeChef',
-    highlight:'Next Contest: Long Challenge — 2nd Nov — 10 days',
-    upcoming:['Cook-Off — 5th Nov — 2h'],
-    completed:['Lunchtime — 29th Oct — 3h']
+    name: 'CodeChef',
+    logo: './assets/images/logos/platform/codechef.svg',
+    fetcher: () => fetchClistContests('codechef.com')
   },
   hackerrank: {
-    logo:'./assets/images/logos/platform/hackerrank.svg',
-    title:'HackerRank',
-    highlight:'No ongoing contest, showing last ended contest',
-    upcoming:['30 Days of Code — Today — 30 days'],
-    completed:['HackerRank Week of Code — Yesterday — 3h']
+    name: 'HackerRank',
+    logo: './assets/images/logos/platform/hackerrank.svg',
+    fetcher: () => fetchClistContests('hackerrank.com')
   },
   hackerearth: {
-    logo:'./assets/images/logos/platform/hackerearth.svg',
-    title:'HackerEarth',
-    highlight:'Next Contest: CodeMonk Challenge — Tomorrow — 3h',
-    upcoming:['CodeMonk Challenge 2 — 5th Nov — 3h'],
-    completed:['Hiring Challenge — 1st Nov — 3h']
+    name: 'HackerEarth',
+    logo: './assets/images/logos/platform/hackerearth.svg',
+    fetcher: () => fetchClistContests('hackerearth.com')
+  },
+  codeforces: {
+    name: 'Codeforces',
+    logo: './assets/images/logos/platform/codeforces.svg',
+    fetcher: () => fetchClistContests('codeforces.com')
+  },
+  atcoder: {
+    name: 'AtCoder',
+    logo: './assets/images/logos/platform/atcoder.svg',
+    fetcher: () => fetchClistContests('atcoder.jp')
   }
 };
 
-// Open modal with data
+// --------------------------
+// Platform card click handler
+// --------------------------
 platformCards.forEach(card => {
-  card.addEventListener('click', () => {
+  card.addEventListener('click', async () => {
     const key = card.dataset.platform;
+    const cfg = platformConfig[key];
+    if (!cfg) return console.warn(`Unknown platform: ${key}`);
+
+    modalLogo.src = cfg.logo;
+    modalHighlight.textContent = 'Loading contests...';
+
+    // Load or reuse contests
+    await updatePlatformContests(key);
+
     const data = platformData[key];
-
-    if (!data) {
-      console.warn(`Platform data not found for key: ${key}`);
-      return;
-    }
-
-    modalLogo.src = data.logo;
     modalHighlight.textContent = data.highlight;
+    upcomingList.innerHTML = createContestTable(data.upcoming, 'Upcoming Contests');
+    completedList.innerHTML = createContestTable(data.completed, 'Completed Contests');
 
-    upcomingList.innerHTML = data.upcoming.map(c => `<li>${c}</li>`).join('');
-    completedList.innerHTML = data.completed.map(c => `<li>${c}</li>`).join('');
-
+    // Open modal
     modal.classList.add('active');
-    document.body.style.overflow = 'hidden'; // Prevent background scroll
-    closeBtn.focus(); // Focus the close button
-
-    // Show upcoming tab by default
+    document.body.style.overflow = 'hidden';
     tabButtons.forEach(btn => btn.classList.remove('active'));
     tabButtons[0].classList.add('active');
     upcomingList.classList.add('active');
@@ -86,32 +88,178 @@ platformCards.forEach(card => {
   });
 });
 
-// Close modal
-const closeModal = () => {
-  modal.classList.remove('active');
-  document.body.style.overflow = ''; // Re-enable scrolling
-};
+// --------------------------
+// Fetch contest data (with caching)
+// --------------------------
+async function updatePlatformContests(platformKey, forceRefresh = false) {
+  const cfg = platformConfig[platformKey];
+  const cached = platformData[platformKey];
+  const now = Date.now();
 
-closeBtn.addEventListener('click', closeModal);
-
-// Close on backdrop click
-modal.addEventListener('click', (e) => {
-  if (e.target === modal) closeModal();
-});
-
-// Close on ESC key
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && modal.classList.contains('active')) {
-    closeModal();
+  const isCacheValid = cached && now - cached.lastFetched < CACHE_TTL_MS;
+  if (isCacheValid && !forceRefresh) {
+    console.log(`🟢 Using cached ${cfg.name} data`);
+    return;
   }
+
+  console.log(`🔄 Fetching fresh ${cfg.name} data...`);
+  try {
+    const { upcoming, completed } = await cfg.fetcher();
+    platformData[platformKey] = {
+      upcoming,
+      completed,
+      highlight: upcoming.length
+        ? `Next Contest: ${upcoming[0].title} — ${upcoming[0].startsIn}`
+        : 'No upcoming contests found',
+      lastFetched: now
+    };
+  } catch (err) {
+    console.error(`Error fetching ${cfg.name}:`, err);
+    platformData[platformKey] = {
+      upcoming: [],
+      completed: [],
+      highlight: 'Failed to load contest data',
+      lastFetched: now
+    };
+  }
+}
+
+// --------------------------
+// Fetch Clist contests
+// --------------------------
+async function fetchClistContests(resource) {
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+  // Format to YYYY-MM-DDTHH:MM:SS
+  const formatDate = d => d.toISOString().split('.')[0];
+
+  const start__gte = formatDate(thirtyDaysAgo); // contests ending after 30 days ago
+  const start__lte = formatDate(thirtyDaysLater); // contests starting before 30 days from now
+
+  const url = `https://clist.by/api/v2/contest/?username=${CLIST_USERNAME}&api_key=${CLIST_API_KEY}&resource=${resource}&start__gte=${start__gte}&start__lte=${start__lte}&order_by=start`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Clist.by API error');
+
+    const data = await res.json();
+    const upcoming = [];
+    const completed = [];
+
+    data.objects.forEach(c => {
+      const start = new Date(c.start);
+      const end = new Date(c.end);
+      if (start > now) upcoming.push(formatContestClist(c));
+      else if (end < now) completed.push(formatContestClist(c));
+    });
+
+    completed.reverse();
+    return { upcoming, completed };
+  } catch (err) {
+    console.error('Error fetching Clist.by contests:', err);
+    return { upcoming: [], completed: [] };
+  }
+}
+
+// --------------------------
+// Format Clist contest
+// --------------------------
+function formatContestClist(c) {
+  const start = new Date(c.start);
+  const end = new Date(c.end);
+  const duration = formatDuration(start, end);
+  const diff = (start - new Date()) / 1000;
+  const startsIn = diff > 0 ? formatTimeDiff(diff) : 'Started';
+
+  return {
+    id: `${c.resource}-${c.id}`,
+    title: c.event,
+    utc: formatTime(start, 'UTC'),
+    ist: formatTime(start, 'Asia/Kolkata'),
+    duration,
+    startsIn,
+    link: c.href,
+    isCompleted: end < new Date()
+  };
+}
+
+// --------------------------
+// Utility functions
+// --------------------------
+function formatTimeDiff(seconds) {
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${mins}m`;
+  return `${mins}m`;
+}
+
+function formatDuration(start, end) {
+  const diff = (end - start) / 1000;
+  const hrs = Math.floor(diff / 3600);
+  const mins = Math.floor((diff % 3600) / 60);
+  return hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
+}
+
+function formatTime(date, timeZone) {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    day: '2-digit',
+    month: 'short',
+    hour: 'numeric',
+    hour12: true,
+  })
+    .format(date)
+    .replace(',', ' - ')
+    .replace(' ', ' ');
+}
+
+// --------------------------
+// Table rendering
+// --------------------------
+function createContestTable(contests, title) {
+  if (!contests || contests.length === 0)
+    return `<p class="no-contests">No ${title.toLowerCase()} available.</p>`;
+
+  const isCompleted = title.toLowerCase().includes('completed');
+  const headers = isCompleted
+    ? `<tr><th>Contest</th><th>UTC</th><th>IST</th><th>Duration</th></tr>`
+    : `<tr><th>Contest</th><th>UTC</th><th>IST</th><th>Duration</th><th>Starts In</th></tr>`;
+
+  const rows = contests.map(c => `
+    <tr id="contest-${c.id}">
+      <td><a href="${c.link}" target="_blank">${c.title}</a></td>
+      <td>${c.utc}</td>
+      <td>${c.ist}</td>
+      <td>${c.duration}</td>
+      ${isCompleted ? '' : `<td>${c.startsIn}</td>`}
+    </tr>`).join('');
+
+  return `<table class="contest-table"><thead>${headers}</thead><tbody>${rows}</tbody></table>`;
+}
+
+// --------------------------
+// Modal + tab controls
+// --------------------------
+closeBtn.addEventListener('click', closeModal);
+modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
 });
 
-// Tab switching
+function closeModal() {
+  modal.classList.remove('active');
+  document.body.style.overflow = '';
+}
+
 tabButtons.forEach(btn => {
   btn.addEventListener('click', () => {
     tabButtons.forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    if(btn.dataset.tab==='upcoming'){
+    if (btn.dataset.tab === 'upcoming') {
       upcomingList.classList.add('active');
       completedList.classList.remove('active');
     } else {
